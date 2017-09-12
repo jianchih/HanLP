@@ -1,11 +1,10 @@
 package com.hankcs.test.algorithm;
 
-import com.hankcs.hanlp.algoritm.ahocorasick.trie.Emit;
-import com.hankcs.hanlp.algoritm.ahocorasick.trie.Trie;
+import com.hankcs.hanlp.algorithm.ahocorasick.trie.Emit;
+import com.hankcs.hanlp.algorithm.ahocorasick.trie.Trie;
 import com.hankcs.hanlp.collection.AhoCorasick.AhoCorasickDoubleArrayTrie;
 import com.hankcs.hanlp.collection.trie.DoubleArrayTrie;
 import com.hankcs.hanlp.corpus.io.IOUtil;
-import com.hankcs.hanlp.dictionary.CoreDictionary;
 import junit.framework.TestCase;
 
 import java.util.*;
@@ -194,4 +193,28 @@ public class AhoCorasickDoubleArrayTrieTest extends TestCase
 //            }
 //        });
 //    }
+
+  public void testHasKeyword() throws Exception
+  {
+      TreeMap<String, String> map = new TreeMap<String, String>();
+      String[] keyArray = new String[]
+              {
+                      "hers",
+                      "his",
+                      "she",
+                      "he"
+              };
+      for (String key : keyArray)
+      {
+          map.put(key, key);
+      }
+      Trie trie = new Trie();
+      trie.addAllKeyword(map.keySet());
+      for (String key : keyArray)
+      {
+        assertTrue(trie.hasKeyword(key));
+      }
+      assertTrue(trie.hasKeyword("ushers"));
+      assertFalse(trie.hasKeyword("构建耗时"));
+  }
 }

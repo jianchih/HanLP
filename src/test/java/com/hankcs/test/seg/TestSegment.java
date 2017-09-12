@@ -399,4 +399,48 @@ public class TestSegment extends TestCase
 
         System.out.println(segment.seg(text));
     }
+
+    public void testIssue496() throws Exception
+    {
+        Segment segment = HanLP.newSegment().enableIndexMode(true);
+        System.out.println(segment.seg("中医药"));
+        System.out.println(segment.seg("中医药大学"));
+    }
+
+    public void testIssue513() throws Exception
+    {
+        List<Term> termList = IndexTokenizer.segment("南京市长江大桥");
+        for (Term term : termList)
+        {
+            System.out.println(term + " [" + term.offset + ":" + (term.offset + term.word.length()) + "]");
+        }
+    }
+
+    public void testIssue519() throws Exception
+    {
+        String[] testCase = new String[]{
+            "评审委员会",
+            "商标评审委员会",
+            "铁道部运输局",
+            "铁道部运输局营运部货运营销计划处",
+        };
+        for (String sentence : testCase)
+        {
+            System.out.println(sentence);
+            List<Term> termList = IndexTokenizer.segment(sentence);
+            for (Term term : termList)
+            {
+                System.out.println(term + " [" + term.offset + ":" + (term.offset + term.word.length()) + "]");
+            }
+            System.out.println();
+        }
+    }
+
+    public void testIssue542() throws Exception
+    {
+        Segment seg = HanLP.newSegment();
+        seg.enableAllNamedEntityRecognize(true);
+        seg.enableNumberQuantifierRecognize(true);
+        System.out.println(seg.seg("一分钟就累了"));
+    }
 }

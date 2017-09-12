@@ -96,6 +96,9 @@ public class IOUtil
             byte[] fileContent = new byte[in.available()];
             readBytesFromOtherInputStream(in, fileContent);
             in.close();
+            // 处理 UTF-8 BOM
+            if (fileContent[0] == -17 && fileContent[1] == -69 && fileContent[2] == -65)
+                return new String(fileContent, 3, fileContent.length - 3, Charset.forName("UTF-8"));
             return new String(fileContent, Charset.forName("UTF-8"));
         }
         catch (FileNotFoundException e)
@@ -255,7 +258,7 @@ public class IOUtil
     }
 
     /**
-     * 将InputStream中的数据读入到字节数组中
+     * 将非FileInputStream的某InputStream中的全部数据读入到字节数组中
      *
      * @param is
      * @return
@@ -263,26 +266,39 @@ public class IOUtil
      */
     public static byte[] readBytesFromOtherInputStream(InputStream is) throws IOException
     {
-        byte[] targetArray = new byte[is.available()];
-        readBytesFromOtherInputStream(is, targetArray);
-        is.close();
-        return targetArray;
+        ByteArrayOutputStream data = new ByteArrayOutputStream();
+
+        int readBytes;
+        byte[] buffer = new byte[Math.max(is.available(), 4096)]; // 最低4KB的缓冲区
+
+        while ((readBytes = is.read(buffer, 0, buffer.length)) != -1)
+        {
+            data.write(buffer, 0, readBytes);
+        }
+
+        data.flush();
+
+        return data.toByteArray();
     }
 
     /**
      * 从InputStream读取指定长度的字节出来
      * @param is 流
      * @param targetArray output
+     * @return 实际读取了多少字节，返回0表示遇到了文件尾部
      * @throws IOException
      */
-    public static void readBytesFromOtherInputStream(InputStream is, byte[] targetArray) throws IOException
+    public static int readBytesFromOtherInputStream(InputStream is, byte[] targetArray) throws IOException
     {
+        assert targetArray != null;
+        assert targetArray.length > 0;
         int len;
         int off = 0;
-        while ((len = is.read(targetArray, off, targetArray.length - off)) != -1 && off < targetArray.length)
+        while (off < targetArray.length && (len = is.read(targetArray, off, targetArray.length - off)) != -1)
         {
             off += len;
         }
+        return off;
     }
 
     public static LinkedList<String> readLineList(String path)
@@ -309,11 +325,19 @@ public class IOUtil
     {
         LinkedList<String> result = new LinkedList<String>();
         String line = null;
+        boolean first = false;
         try
         {
             BufferedReader bw = new BufferedReader(new InputStreamReader(IOUtil.newInputStream(path), "UTF-8"));
             while ((line = bw.readLine()) != null)
             {
+                if (first)
+                {
+                    first = false;
+                    char ch = line.charAt(0);
+                    if (ch == '\uFEFF')
+                        line = line.substring(1);
+                }
                 result.add(line);
             }
             bw.close();
@@ -365,6 +389,16 @@ public class IOUtil
     public static LineIterator readLine(String path)
     {
         return new LineIterator(path);
+    }
+
+    /**
+     * 删除本地文件
+     * @param path
+     * @return
+     */
+    public static boolean deleteFile(String path)
+    {
+        return new File(path).delete();
     }
 
     /**
